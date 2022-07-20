@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
-require('dotenv').config();
-const connectionString = process.env.DATABASE_URL;
+require("dotenv").config();
+const { POSTGRES_DB:database, POSTGRES_USER: user, POSTGRES_PASSWORD: password } = process.env;
 
 const init = async () => {
-
   try {
+    const connectionString = `mongodb+srv://${user}:${password}@${database}.imc4u.mongodb.net/?retryWrites=true&w=majority`;
     await mongoose.connect(connectionString);
     console.log("Connected to the database sucessfully!");
   } catch (err) {
