@@ -8,7 +8,7 @@ database.init();
 
 app.use(express.json());
 app.use(morgan('dev'));
-app.use('/users',usersRouter);
+app.use('/',usersRouter);
 /* app.use('/heroes',heroesRouter); */
 
 

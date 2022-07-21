@@ -1,10 +1,15 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
-const { POSTGRES_DB:database, POSTGRES_USER: user, POSTGRES_PASSWORD: password } = process.env;
+const {
+  MARVEL_CLUSTER: cluster,
+  MARVEL_DB: database,
+  MARVEL_USER: user,
+  MARVEL_PASSWORD: password,
+} = process.env;
 
 const init = async () => {
   try {
-    const connectionString = `mongodb+srv://${user}:${password}@${database}.imc4u.mongodb.net/?retryWrites=true&w=majority`;
+    const connectionString = `mongodb+srv://${user}:${password}@${cluster}/${database}?retryWrites=true&w=majority`;
     await mongoose.connect(connectionString);
     console.log("Connected to the database sucessfully!");
   } catch (err) {
