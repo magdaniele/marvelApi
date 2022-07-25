@@ -1,18 +1,16 @@
 const axios = require("axios").default;
 const md5 = require("blueimp-md5");
 const heroes = require("../database/models/heroes");
-const { JWT_SECRET: secretToken } = process.env;
-const jwt = require("jsonwebtoken");
 const users = require("../database/models/users");
-require("dotenv").config();
+const { decodeToken } = require("../middleware/authMiddleware");
 
 const { PUBLIC_KEY: publicKey, PRIVATE_KEY: privateKey } = process.env;
 
-const getHeroeInfo = async (req, res) => {
+const getHeroeInfo = async (req, res) => { // get heroe info
   try {
-    const token = req.headers["x-access-token"];
+    const token = req.headers.authorization.split(' ').pop();
     const { name } = req.body;
-    var email= await jwt.verify(token, secretToken).email;
+    var email = await decodeToken(token).email;
     const user = await users.findOne({email});
     const idHeroe = await axios
       .get(
@@ -70,7 +68,7 @@ const getHeroeInfo = async (req, res) => {
   }
 };
 
-const getHeroesSearched = async (req, res) => {
+const getHeroesSearched = async (req, res) => { // get all heroes searched
   try {
     const Heroes = await heroes.find();
     if (Heroes.length === 0) {
@@ -84,7 +82,7 @@ const getHeroesSearched = async (req, res) => {
   }
 };
 
-const getHeroeSearchedByName = async (req, res) => {
+const getHeroeSearchedByName = async (req, res) => { // get heroe searched by name
     try {
         const { name } = req.params;
         const heroe = await heroes.find({name});
@@ -98,7 +96,7 @@ const getHeroeSearchedByName = async (req, res) => {
     }
 }
 
-const getHeroeSearchedByUsername = async (req, res) => {
+const getHeroeSearchedByUsername = async (req, res) => { // get heroe searched by username
     try {
         const { username } = req.params;
         const heroe = await heroes.find({searcher: username});

@@ -1,22 +1,14 @@
 const users = require("../database/models/users");
-const { JWT_SECRET: secretToken } = process.env;
-const jwt = require("jsonwebtoken");
+const lastLogin = require("../database/models/lastLogin");
+const { getToken, isAdmin } = require("../middleware/authMiddleware");
 
-const findUser = async (User) => {
+const findUser = async (User) => { // Find user
   const { email } = User;
   const userFinded = await users.findOne({ email });
   return userFinded;
 };
 
-const isAdmin = async (User) => {
-  const { role } = User;
-  if (role === "admin") {
-    return true;
-  }
-  return false;
-};
-
-const createUser = async (req, res) => {
+const createUser = async (req, res) => { // Create user
   try {
     const { username, email, password, confirmPassword } = req.body;
     const user = { username, email, password };
@@ -41,7 +33,7 @@ const createUser = async (req, res) => {
     next(error);
   }
 };
-const updateUser = (req, res) => {
+const updateUser = (req, res) => { // Update user
   const { id } = req.params;
   try {
     const { username, email } = req.body;
@@ -59,7 +51,7 @@ const updateUser = (req, res) => {
   }
 };
 
-const deleteUser = (req, res) => {
+const deleteUser = (req, res) => { // Delete user
   const { id } = req.params;
   const user = users.find((user) => user.id === id);
   if (!isAdmin(user)) {
@@ -69,9 +61,9 @@ const deleteUser = (req, res) => {
   return res.json(user);
 };
 
-const login = async (req, res) => {
-  const { email, password } = req.body;
+const login = async (req, res) => { // Login user
   try {
+    const { email, password } = req.body;
     const user = await findUser({ email, password });
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -80,33 +72,17 @@ const login = async (req, res) => {
         return res.status(400).json({ error: "Password incorrect" });
       }
 
-      const token = jwt.sign(
-        { email: user.email, password: user.password },
-        secretToken,
-        { expiresIn: "1h" }
-      );
+      const token =  getToken(user);
+      await lastLogin.create({usermane: user.username, loginDate: Date.now()}).then(() => {
+        }).catch((error) => {
+          return res.status(400).json({ error: "Couldn't create last login" });
+        });
+
       return res.status(202).json({ message: "Login success!", token });
     }
   } catch (error) {
+    console.log(error);
     return res.status(401).json({ error: "Couldn't login" });
-  }
-};
-
-const validateToken = async (req, res, next) => {
-  const token = req.headers["x-access-token"];
-  if (!token) {
-    return res.status(401).json({ error: "Access denied, token required" });
-  }
-  try {
-    jwt.verify(token, secretToken, (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ error: "Invalid token" });
-      } else {
-        next();
-      }
-    });
-  } catch (error) {
-    return res.status(401).json({ error: "Access denied" });
   }
 };
 
@@ -116,5 +92,4 @@ module.exports = {
   updateUser,
   deleteUser,
   login,
-  validateToken,
 };
